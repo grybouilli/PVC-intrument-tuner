@@ -51,7 +51,7 @@ void loop()
     }
 }
 
-void checkWireInput()
+void checkWireInput(int bytes)
 {
     char inputArray [256];
     
