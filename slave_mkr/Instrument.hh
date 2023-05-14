@@ -34,14 +34,17 @@ public:
 
     Instrument();
 
-    static Chord getMinorFrom(Chord);
-
     void addNote(Tuning chord, NoteController* controller);
 
     void run();
 
     void tuneTo(int, NoteController::NotePosition);
+
+    bool isTuned() const;
 private:
+
+    Tuning chordToTune(Chord);
+    
     std::array<NoteController*, (int)Tuning::TOTAL> _notes;
 
 };

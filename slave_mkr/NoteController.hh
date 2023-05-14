@@ -24,8 +24,8 @@ class NoteController
 public:
     enum class MotorDirection
     {
-        CLOCKWISE = 1,
-        ANTICLOCKWISE = -1
+        CLOCKWISE = -1,
+        ANTICLOCKWISE = 1
     };
 
     enum class NotePosition

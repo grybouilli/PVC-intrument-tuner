@@ -11,7 +11,7 @@
 #pragma once
 
 #include <AccelStepper.h>
-#include <array>
+#include "array.hh"
 
 // Define the AccelStepper interface type; 4 wire motor in half step mode:
 #define MotorInterfaceType 8
@@ -24,8 +24,8 @@ class NoteController
 public:
     enum class MotorDirection
     {
-        CLOCKWISE = 1,
-        ANTICLOCKWISE = -1
+        CLOCKWISE = -1,
+        ANTICLOCKWISE = 1
     };
 
     enum class NotePosition
@@ -37,7 +37,7 @@ public:
     };
 
 
-    explicit NoteController(int,int,int,int,int);
+    explicit NoteController(int,int,int,int,int, float);
 
     void    run();
 
@@ -58,7 +58,7 @@ private:
     int                                     _stopButton;
     int                                     _lastButtonState;
 
-    std::array<float, NotePosition::ZERO>   _notesDepth;
+    std::array<float, (int)NotePosition::ZERO>   _notesDepth;
     float                                   _tubeLength;
 
     AccelStepper                            _motorInterface;

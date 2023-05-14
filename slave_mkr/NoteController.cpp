@@ -1,18 +1,18 @@
-#include "NoteController.hpp"
-#include <cmath>
-
+#include "NoteController.hh"
+#include <math.h>
+#include <stdlib.h>
 /**
  * @brief NoteController constructor
  * 
  * Initialize the controller with default target to find zero position.
  * 
  *
- * @param mpin1         IN1 on the ULN2003 driver
+ * @param mpin1         IN1 on the ULN2003 driver (not PWM)
  * @param mpin2         IN2 on the ULN2003 driver 
  * @param mpin3         IN3 on the ULN2003 driver 
  * @param mpin4         IN4 on the ULN2003 driver 
  * @param bpin          Stop Button pin
- * @param tubeLength    PVC tube length below sound hole
+ * @param tubeLength    PVC tube length below sound hole (in mm)
  * */
 
 NoteController::NoteController(int mpin1, int mpin2, int mpin3, int mpin4, int bpin, float tubeLength)
@@ -21,8 +21,8 @@ NoteController::NoteController(int mpin1, int mpin2, int mpin3, int mpin4, int b
 , _notesDepth {-1, -1, -1}
 , _tubeLength { tubeLength } 
 , _motorInterface { MotorInterfaceType, mpin1, mpin3, mpin2, mpin4 }
-, _currentDirection { -1 }
-, _currentNote { ZERO }
+, _currentDirection { MotorDirection::ANTICLOCKWISE }
+, _currentNote { NotePosition::ZERO }
 , _targetReached { false }
 {
     // Set the maximum steps per second:
@@ -53,13 +53,13 @@ void NoteController::run()
  * 
  *
  * @param note  The associated note.
- * @param depth The tube depth (below sound hole) producing the note.
+ * @param depth The tube depth (below sound hole) producing the note. (expressed in mm)
  */
 void NoteController::setNoteDepth(NotePosition note, float depth)
 {
-    if(pos == NotePosition::ZERO)
+    if(note == NotePosition::ZERO)
     {
-        throw std::logic_error("NoteController::setNoteDepth : cannot set a depth for note ZERO.");
+        Serial.println("NoteController::setNoteDepth : cannot set a depth for note ZERO.");
     }
     _notesDepth[(int)note] = depth;
 }
@@ -76,19 +76,20 @@ void NoteController::setNote(NotePosition pos)
     _currentDirection = MotorDirection::CLOCKWISE;
     if(pos == NotePosition::ZERO)
     {
-        throw std::logic_error("NoteController::setNote : pos ZERO shouldn't be given. Use setZero() instead.");
+        Serial.println("NoteController::setNote : pos ZERO shouldn't be given. Use setZero() instead.");
         return;
     }
     if(_notesDepth[(int)pos] < 0)
     {
-        throw std::logic_error("NoteController::setNote : depth of note " + std::to_string((int)pos) + " hasn't been set yet.");   
+        Serial.println("NoteController::setNote : depth of note hasn't been set yet.");   
         return;
     }
+    
+    _motorInterface.move((int)_currentDirection * noteToSteps(pos));
 
-    _targetPos = pos;
+    _currentNote = pos;
     _targetReached = false;
 
-    _motorInterface.move(noteToSteps(pos));
 }
 
 /**
@@ -99,7 +100,7 @@ void NoteController::setNote(NotePosition pos)
 void NoteController::setZero()
 {
     _currentDirection = MotorDirection::ANTICLOCKWISE;
-    _targetPos = NotePosition::ZERO;
+    _currentNote = NotePosition::ZERO;
     _targetReached = false;
 
     _motorInterface.setCurrentPosition(0);
@@ -132,11 +133,12 @@ void NoteController::runToZero()
     }
 
     // Check if button was hit
-    int currentStopButtonState = digitalRead(stopButtonPin); // read new state
+    int currentStopButtonState = digitalRead(_stopButton); // read new state
     if (_lastButtonState == HIGH && currentStopButtonState == LOW) {
         //Stop motor 
         _motorInterface.setCurrentPosition(0);
         _targetReached = true;
+        Serial.println("zero reached!");
     } 
     _lastButtonState    = currentStopButtonState;      // save the last state
 }
@@ -151,7 +153,7 @@ void NoteController::runToNote(NotePosition note)
 {
     switch (note)
     {
-    case ZERO:
+    case NotePosition::ZERO:
         runToZero();
         break;
     
@@ -177,14 +179,24 @@ long NoteController::noteToSteps(NotePosition note)
     float toTravel{};
     if(_currentNote == NotePosition::ZERO)
     {
-        toTravel = _tubeLength - _notesDepth[note];
+        toTravel = _tubeLength - _notesDepth[(int)note];
     } else
     {
-        toTravel = _notesDepth[_currentNote] - _notesDepth[note];
+        Serial.print("\nWill travel: ");
+        Serial.print(_notesDepth[(int)_currentNote]);
+        Serial.print("\n");
+        Serial.print(_notesDepth[(int)note]);
+
+        toTravel = _notesDepth[(int)_currentNote] - _notesDepth[(int)note];
     }
 
-    float angle = toTravel / (2 * M_PI * _tubeLength);
-    long steps = std::round(angle * StepsPerRevolution / (2*M_PI));
+    // ************** TEST ME **************
+    long steps = round((toTravel * StepsPerRevolution) / (2*M_PI*SPUR_RADIUS));
+
+    
+    Serial.print("\nWill run nb of steps: ");
+    Serial.print(steps);
 
     return steps;
 }
+
