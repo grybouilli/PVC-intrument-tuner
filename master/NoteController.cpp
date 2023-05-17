@@ -26,8 +26,9 @@ NoteController::NoteController(int mpin1, int mpin2, int mpin3, int mpin4, int b
 , _targetReached { false }
 {
     // Set the maximum steps per second:
-    _motorInterface.setMaxSpeed(1000.0);
-    _motorInterface.setAcceleration(50.0);
+    _motorInterface.setMaxSpeed(1500.0);
+    _motorInterface.setAcceleration(200.0);
+    // _motorInterface.setSpeed(1000.0);
     _motorInterface.setCurrentPosition(0);
     // initialize the pushbutton pin as an input:
     pinMode(bpin, INPUT_PULLUP);
@@ -191,7 +192,7 @@ long NoteController::noteToSteps(NotePosition note)
     }
 
     // ************** TEST ME **************
-    long steps = round((toTravel * StepsPerRevolution) / (2*M_PI*SPUR_RADIUS));
+    long steps = (toTravel * StepsPerRevolution) / (2*M_PI*SPUR_RADIUS) * 2;
 
     
     Serial.print("\nWill run nb of steps: ");

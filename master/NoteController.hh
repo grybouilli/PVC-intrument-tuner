@@ -15,7 +15,7 @@
 
 // Define the AccelStepper interface type; 4 wire motor in half step mode:
 #define MotorInterfaceType 8
-#define StepsPerRevolution 4096
+#define StepsPerRevolution 2048
 
 #define SPUR_RADIUS 15.f // mm
 
@@ -24,8 +24,8 @@ class NoteController
 public:
     enum class MotorDirection
     {
-        CLOCKWISE = -1,
-        ANTICLOCKWISE = 1
+        CLOCKWISE = 1,
+        ANTICLOCKWISE = -1
     };
 
     enum class NotePosition
